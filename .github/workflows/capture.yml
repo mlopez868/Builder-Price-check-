@@ -14,17 +14,26 @@ on:
         required: false
         default: capture
         type: string
+  push:
+    paths:
+      - capture-request.txt
 permissions:
   contents: write
 jobs:
   capture:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout (for capture-request.txt on push)
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
       - name: Fetch URLs
         env:
           URLS: ${{ inputs.urls }}
           UA: "sa-pricing-tracker/0.1 (public new-home pricing research; contact: markus@mavectra.com)"
         run: |
+          if [ -z "$URLS" ] && [ -f capture-request.txt ]; then
+            URLS=$(grep -v '^#' capture-request.txt || true)
+          fi
           mkdir -p .capture
           i=0
           while IFS= read -r url; do

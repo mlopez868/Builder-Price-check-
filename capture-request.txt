@@ -1,0 +1,4 @@
+# URLs for the capture workflow to fetch (Phase 0 dev tool). Lines starting with # are ignored.
+https://www.drhorton.com/robots.txt
+https://www.drhorton.com/texas/san-antonio
+https://www.drhorton.com/
