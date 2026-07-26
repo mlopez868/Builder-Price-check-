@@ -1,4 +1,3 @@
 # URLs for the capture workflow to fetch (Phase 0 dev tool). Lines starting with # are ignored.
-https://www.drhorton.com/Assets/communityfinder/community-finder.bb36163f.js
-https://www.drhorton.com/Assets/communityfinder/community-finder-search-box.aa4bac22.js
-https://www.drhorton.com/assets/feature-common/js/community-finder.js
+https://www.drhorton.com/api/comms/direct/texas/san-antonio
+https://www.drhorton.com/api/qmis/direct/texas/san-antonio
