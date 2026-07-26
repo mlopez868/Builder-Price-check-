@@ -1,0 +1,55 @@
+# Phase 0 dev tool: fetch public builder pages/endpoints from an Actions runner
+# and publish the raw bodies to the `capture-output` scratch branch for review.
+# Not one of the scheduled scrape workflows.
+name: capture
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: Newline-separated URLs to fetch
+        required: true
+        type: string
+      label:
+        description: Label for this capture batch
+        required: false
+        default: capture
+        type: string
+permissions:
+  contents: write
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch URLs
+        env:
+          URLS: ${{ inputs.urls }}
+          UA: "sa-pricing-tracker/0.1 (public new-home pricing research; contact: markus@mavectra.com)"
+        run: |
+          mkdir -p .capture
+          i=0
+          while IFS= read -r url; do
+            url=$(echo "$url" | tr -d '[:space:]')
+            [ -z "$url" ] && continue
+            i=$((i+1))
+            fname=$(printf '%02d' "$i")_$(echo "$url" | sed 's|https\{0,1\}://||; s|[^A-Za-z0-9._-]|_|g' | cut -c1-140)
+            code=$(curl -sS -L --max-time 60 -A "$UA" \
+              -H 'Accept: application/json, text/html;q=0.9, */*;q=0.8' \
+              -w '%{http_code}' -o ".capture/$fname" "$url") || code=ERR
+            size=$(wc -c < ".capture/$fname" 2>/dev/null || echo 0)
+            echo "=== [$code] ($size bytes) $url -> $fname"
+            head -c 800 ".capture/$fname" | tr -d '\0' || true
+            echo ""
+            echo "---"
+            sleep 2
+          done <<< "$URLS"
+      - name: Publish to capture-output branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd .capture
+          git init -q -b capture-output
+          git config user.name "capture-bot"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -q -m "capture: ${{ inputs.label }} (run ${{ github.run_id }})"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" capture-output
