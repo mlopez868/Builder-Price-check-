@@ -1,0 +1,22 @@
+# Daily scrape. Inventory turns over daily and delisting resolution drives
+# absorption, so this runs every day — pricing history cannot be backfilled.
+# Phase 1 will swap the hardcoded module for `pricing.runner --job qmi`.
+name: daily-qmi
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install dependencies
+        run: uv sync --frozen
+      - name: Scrape
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: uv run python -m pricing.phase0_drhorton

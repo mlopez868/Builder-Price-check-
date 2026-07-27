@@ -1,0 +1,31 @@
+# Weekly change report. Monday 13:00 UTC (8am CDT) so it lands before the week
+# starts. Posts to Slack when SLACK_WEBHOOK_URL is configured; the run log
+# always carries the full text either way.
+name: weekly-digest
+on:
+  schedule:
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: Reporting window in days
+        required: false
+        default: "7"
+        type: string
+permissions:
+  contents: read
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install dependencies
+        run: uv sync --frozen
+      - name: Build digest
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          uv run python -m pricing.digest --days "${{ inputs.days || 7 }}" \
+            | tee "$GITHUB_STEP_SUMMARY"
