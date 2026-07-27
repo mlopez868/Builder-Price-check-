@@ -1,0 +1,25 @@
+# Manually-triggered scraper run against the real database.
+# The daily/weekly cron schedules arrive in Phase 3; until then this is the
+# way to run the Phase 0 scraper outside a dev machine.
+# (The push trigger on this file's own path exists so the first run starts
+# as soon as the workflow lands; after that, use "Run workflow" in the UI.)
+name: run-scraper
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/run-scraper.yml
+permissions:
+  contents: read
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: uv sync --frozen
+      - name: Run Phase 0 scraper
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: uv run python -m pricing.phase0_drhorton
